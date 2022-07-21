@@ -1,0 +1,49 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - https://cloudify.co/spec/cloudify/6.3.0/types.yaml
+  - plugin:cloudify-kubernetes-plugin?version===2.13.9
+
+inputs:
+
+  kube_config_path:
+    type: string
+    default: /kubeconfig.yaml
+
+node_templates:
+
+  master:
+    type: cloudify.kubernetes.nodes.Master
+    properties:
+      configuration:
+
+
+node_templates:
+
+  eks_cluster:
+    type: cloudify.kubernetes.nodes.Master
+    properties:
+      configuration:
+        manager_file_path: { get_input: kube_config_path }
+
+      
+              # file_content: { get_secret: { concat:[kubeconfig__, { get_input: environment_id }] } }
+
+  nginx_pod:
+    type: cloudify.kubernetes.resources.Pod
+    properties:
+      definition:
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: nginx
+        spec:
+          ports:
+          - port: 80
+          containers:
+          - name: nginx
+            image: nginx
+            
+    relationships:
+      - type: cloudify.kubernetes.relationships.managed_by_master
+        target: master
